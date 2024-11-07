@@ -20,6 +20,9 @@ public:
     static USplineManagerTool* GetInstance();
 
     void Initialize();
+    void OnLevelChanged();
+    void OnLevelChanged(bool bIsSimulating);
+    void OnLevelChanged(const FString& MapName, bool bAsTemplate);
     void Shutdown();
 
     // Handle selection changes in the editor

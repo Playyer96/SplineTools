@@ -29,6 +29,12 @@ USplineManagerTool::~USplineManagerTool()
 // Get the instance of SplineManagerTool
 USplineManagerTool* USplineManagerTool::GetInstance()
 {
+    if (Instance && !Instance->IsValidLowLevel()) // Check if Instance is valid
+    {
+        UE_LOG(LogTemp, Error, TEXT("SplineManagerTool instance is invalid."));
+        Instance = nullptr; // Reset Instance if invalid
+    }
+
     if (!Instance)
     {
         Instance = NewObject<USplineManagerTool>();
@@ -43,23 +49,47 @@ USplineManagerTool* USplineManagerTool::GetInstance()
 void USplineManagerTool::Initialize()
 {
     UWorld* World = GEditor->GetEditorWorldContext().World();
-    if (!World)
+    if (!World || !World->IsValidLowLevel())
     {
-        UE_LOG(LogTemp, Error, TEXT("Failed to get the editor world context."));
+        UE_LOG(LogTemp, Error, TEXT("Failed to get a valid editor world context."));
         return;
     }
 
     GEditor->GetSelectedActors()->SelectObjectEvent.AddUObject(this, &USplineManagerTool::OnSelectionChanged);
 
-    // Populate all tracked splines in the scene
+    // Register for level change events
+    FEditorDelegates::PreBeginPIE.AddUObject(this, &USplineManagerTool::OnLevelChanged);
+    FEditorDelegates::EndPIE.AddUObject(this, &USplineManagerTool::OnLevelChanged);
+    FEditorDelegates::OnMapOpened.AddUObject(this, &USplineManagerTool::OnLevelChanged);
+
+    // Populate tracked splines and set up the timer
     for (TActorIterator<ASplineTrackerActor> It(World); It; ++It)
     {
         AllTrackedSplines.Add(*It);
     }
 
-    // Set a timer to call CheckForSplineUpdates every 0.5 seconds
-    World->GetTimerManager().SetTimer(UpdateTimerHandle, this, &USplineManagerTool::CheckForSplineUpdates, 0.5f, true);
+    World->GetTimerManager().SetTimer(UpdateTimerHandle, this, &USplineManagerTool::CheckForSplineUpdates, 0.5f, true, 1.0f);
     UE_LOG(LogTemp, Log, TEXT("Spline Manager Tool Initialized with periodic updates."));
+}
+
+void USplineManagerTool::OnLevelChanged()
+{
+    UE_LOG(LogTemp, Warning, TEXT("Level is changing. Shutting down SplineManagerTool."));
+    Shutdown();
+}
+
+void USplineManagerTool::OnLevelChanged(bool bIsSimulating)
+{
+    UE_LOG(LogTemp, Warning, TEXT("PIE state changed: %s"), bIsSimulating ? TEXT("Started") : TEXT("Ended"));
+
+    Shutdown();
+}
+
+void USplineManagerTool::OnLevelChanged(const FString& MapName, bool bAsTemplate)
+{
+    UE_LOG(LogTemp, Warning, TEXT("Map opened: %s (As Template: %s)"), *MapName, bAsTemplate ? TEXT("True") : TEXT("False"));
+
+    Shutdown();
 }
 
 // Unsubscribe from selection change events
@@ -68,16 +98,23 @@ void USplineManagerTool::Shutdown()
     if (GEditor)
     {
         GEditor->GetSelectedActors()->SelectObjectEvent.RemoveAll(this);
+
         if (UWorld* World = GEditor->GetEditorWorldContext().World())
         {
             World->GetTimerManager().ClearTimer(UpdateTimerHandle);
         }
+
+        // Unregister from level change events
+        FEditorDelegates::PreBeginPIE.RemoveAll(this);
+        FEditorDelegates::EndPIE.RemoveAll(this);
+        FEditorDelegates::OnMapOpened.RemoveAll(this);
     }
 
-    // Clean up the static instance to prevent memory leaks
+    AllTrackedSplines.Empty();
+
     if (Instance)
     {
-        Instance->RemoveFromRoot(); // Allow garbage collection to destroy the instance
+        Instance->RemoveFromRoot();
         Instance = nullptr;
     }
 }
@@ -114,20 +151,23 @@ void USplineManagerTool::OnSelectionChanged(UObject* NewSelection)
 // Check for updates in spline positions
 void USplineManagerTool::CheckForSplineUpdates()
 {
+    UWorld* World = GEditor->GetEditorWorldContext().World();
+    if (!World || !World->IsValidLowLevel()) // Verify World is still valid
+    {
+        UE_LOG(LogTemp, Warning, TEXT("World context is invalid in CheckForSplineUpdates."));
+        return;
+    }
+
     if (CurrentGlobalSplineActor && bHasModifications)
     {
-        // Compare previous state to current state if needed
         ApplyGlobalSplineToAllSplines(CurrentGlobalSplineActor);
     }
     else
     {
-        // Stop the timer if there are no modifications or if the actor is invalid
-        if (UWorld* World = GEditor->GetEditorWorldContext().World())
-        {
-            World->GetTimerManager().ClearTimer(UpdateTimerHandle);
-        }
+        World->GetTimerManager().ClearTimer(UpdateTimerHandle);
     }
 }
+
 
 // Copy points from the global spline to all other splines
 void USplineManagerTool::ApplyGlobalSplineToAllSplines(ASplineTrackerActor* SourceSplineActor)
