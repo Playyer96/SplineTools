@@ -58,7 +58,7 @@ private:
     float CurrentSplinePosition; // Current position on the spline
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication", meta = (AllowPrivateAccess = "true"))
-    float InterpolationSpped = 2.0f;
+    float InterpolationSpeed = 2.0f;
     // Tolerance value for position correction
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication", meta = (AllowPrivateAccess = "true"))
     float Tolerance = 0.01f; // Define your tolerance here

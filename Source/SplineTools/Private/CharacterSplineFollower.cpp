@@ -1,4 +1,5 @@
 #include "CharacterSplineFollower.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Components/SplineComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -8,11 +9,18 @@ ACharacterSplineFollower::ACharacterSplineFollower()
 
     CurrentSplinePosition = 0.0f;
     bIsFollowing = false;
-
-    // Enable replication for this actor
     bReplicates = true;
 
-    // Create the character mesh component
+    // Access the CharacterMovementComponent to set smoothing properties
+    if (GetCharacterMovement())
+    {
+        GetCharacterMovement()->NetworkSmoothingMode = ENetworkSmoothingMode::Linear;
+        GetCharacterMovement()->bNetworkAlwaysReplicateTransformUpdateTimestamp = true;
+        GetCharacterMovement()->NetworkSimulatedSmoothLocationTime = 0.5f;
+        GetCharacterMovement()->NetworkSimulatedSmoothRotationTime = 0.5f;
+    }
+
+    // Initialize character mesh
     CharacterMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh"));
     CharacterMesh->SetupAttachment(RootComponent);
 }
@@ -113,7 +121,7 @@ void ACharacterSplineFollower::InterpolateMovement(FVector TargetLocation, FRota
 {
     FVector CurrentLocation = GetActorLocation();
     // Increase interpolation speed for smoother movement
-    FVector SmoothedLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, DeltaTime, InterpolationSpped); // Adjusted interpolation speed
+    FVector SmoothedLocation = FMath::VInterpTo(CurrentLocation, TargetLocation, DeltaTime, InterpolationSpeed); // Adjusted interpolation speed
 
     // Keep the original Z height
     SmoothedLocation.Z = CurrentLocation.Z;
@@ -121,7 +129,7 @@ void ACharacterSplineFollower::InterpolateMovement(FVector TargetLocation, FRota
     // Smoothly interpolate the rotation using SLERP for better results
     FQuat CurrentRotationQuat = FQuat(GetActorRotation());
     FQuat TargetRotationQuat = FQuat(TargetRotation);
-    FQuat SmoothedRotationQuat = FQuat::Slerp(CurrentRotationQuat, TargetRotationQuat, DeltaTime * InterpolationSpped); // Adjusted interpolation speed
+    FQuat SmoothedRotationQuat = FQuat::Slerp(CurrentRotationQuat, TargetRotationQuat, DeltaTime * InterpolationSpeed); // Adjusted interpolation speed
 
     SetActorLocation(SmoothedLocation);
     SetActorRotation(SmoothedRotationQuat.Rotator());
