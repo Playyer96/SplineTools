@@ -183,7 +183,10 @@ void USplineManagerTool::ApplyGlobalSplineToAllSplines(ASplineTrackerActor* Sour
 
     for (ASplineTrackerActor* SplineActor : AllTrackedSplines)
     {
-        if (SplineActor && SplineActor->bGlobalOverride && SplineActor != SourceSplineActor)
+        // Check if the actor has the global override, is not the source spline, has the same class, and shares tags
+        if (SplineActor && SplineActor->bGlobalOverride && SplineActor != SourceSplineActor &&
+            SplineActor->GetClass() == SourceSplineActor->GetClass() &&
+            SplineActor->Tags == SourceSplineActor->Tags)
         {
             USplineComponent* TargetSpline = SplineActor->SplineComponent;
             if (TargetSpline)

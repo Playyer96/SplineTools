@@ -8,26 +8,31 @@
 #include "SplineManagerTool.h"
 #endif
 
-// Constructor
 ASplineTrackerActor::ASplineTrackerActor()
 {
     PrimaryActorTick.bCanEverTick = true; // Enable tick for rotation
-    // Create and attach the spline component
-    SplineComponent = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComponent"));
-    RootComponent = SplineComponent;
 
-    LastLabelColor = LabelColor; // Initialize the last color
+    // Create and set the root component
+    RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+    RootComponent->SetMobility(EComponentMobility::Movable); // Set mobility if needed
+
+    // Create the spline component and attach it to the root component
+    SplineComponent = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComponent"));
+    SplineComponent->SetupAttachment(RootComponent); // Attach to root component
+
+    // Initialize the last label color
+    LastLabelColor = LabelColor;
 }
 
 void ASplineTrackerActor::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (!CharacterToSpawn)
-    {
-        UE_LOG(LogTemp, Error, TEXT("CharacterToSpawn is not set in %s!"), *GetName());
-        return;
-    }
+    //if (!CharacterToSpawn)
+    //{
+    //    UE_LOG(LogTemp, Error, TEXT("CharacterToSpawn is not set in %s!"), *GetName());
+    //    return;
+    //}
 }
 
 void ASplineTrackerActor::OnConstruction(const FTransform& Transform)
@@ -59,46 +64,46 @@ void ASplineTrackerActor::OnConstruction(const FTransform& Transform)
             PointLabels.Empty(); // Clear the array of point labels
         }
 
-        if (!SpawnedCharacter)
-        {
-            UWorld* World = GetWorld();
-            if (World)
-            {
-                // Correct placement of SpawnParams
-                FActorSpawnParameters SpawnParams;
-                SpawnParams.Owner = this;
+        //if (!SpawnedCharacter)
+        //{
+        //    UWorld* World = GetWorld();
+        //    if (World)
+        //    {
+        //        // Correct placement of SpawnParams
+        //        FActorSpawnParameters SpawnParams;
+        //        SpawnParams.Owner = this;
 
-                if (CharacterToSpawn)
-                {
-                    SpawnedCharacter = World->SpawnActor<ACharacterSplineFollower>(CharacterToSpawn, GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+        //        if (CharacterToSpawn)
+        //        {
+        //            SpawnedCharacter = World->SpawnActor<ACharacterSplineFollower>(CharacterToSpawn, GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
 
-                    if (SpawnedCharacter)
-                    {
-                        // Additional safety check before initializing
-                        if (SpawnedCharacter->IsValidLowLevel())
-                        {
-                            SpawnedCharacter->SetSplineComponent(SplineComponent);
-                        }
-                        else
-                        {
-                            UE_LOG(LogTemp, Warning, TEXT("SpawnedCharacter is invalid in %s"), *GetName());
-                        }
-                    }
-                    else
-                    {
-                        UE_LOG(LogTemp, Warning, TEXT("Failed to spawn CharacterSplineFollower."));
-                    }
-                }
-                else
-                {
-                    UE_LOG(LogTemp, Warning, TEXT("CharacterToSpawn is not set!"));
-                }
-            }
-            else
-            {
-                UE_LOG(LogTemp, Warning, TEXT("World context is not valid in %s"), *GetName());
-            }
-        }
+        //            if (SpawnedCharacter)
+        //            {
+        //                // Additional safety check before initializing
+        //                if (SpawnedCharacter->IsValidLowLevel())
+        //                {
+        //                    SpawnedCharacter->SetSplineComponent(SplineComponent);
+        //                }
+        //                else
+        //                {
+        //                    UE_LOG(LogTemp, Warning, TEXT("SpawnedCharacter is invalid in %s"), *GetName());
+        //                }
+        //            }
+        //            else
+        //            {
+        //                UE_LOG(LogTemp, Warning, TEXT("Failed to spawn CharacterSplineFollower."));
+        //            }
+        //        }
+        //        else
+        //        {
+        //            UE_LOG(LogTemp, Warning, TEXT("CharacterToSpawn is not set!"));
+        //        }
+        //    }
+        //    else
+        //    {
+        //        UE_LOG(LogTemp, Warning, TEXT("World context is not valid in %s"), *GetName());
+        //    }
+        //}
     }
 }
 

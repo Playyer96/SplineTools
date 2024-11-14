@@ -1,19 +1,48 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "GameFramework/Actor.h"
 #include "Components/SplineComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "SplineTrackerActor.h"
 #include "CharacterSplineFollower.generated.h"
 
+// Enum for collision types
+UENUM(BlueprintType)
+enum class ECollisionType : uint8
+{
+    Capsule UMETA(DisplayName = "Capsule"),
+    Box UMETA(DisplayName = "Box"),
+    Sphere UMETA(DisplayName = "Sphere")
+};
+
 UCLASS()
-class SPLINETOOLS_API ACharacterSplineFollower : public ACharacter
+class SPLINETOOLS_API ACharacterSplineFollower : public ASplineTrackerActor
 {
     GENERATED_BODY()
 
 public:
-    // Constructor
     ACharacterSplineFollower();
+
+    // Collision setup function
+    void SetupCollisionComponent();
+
+    void UpdateCollisionSize();
+
+    // Called when the object is created or updated
+    virtual void OnConstruction(const FTransform& Transform) override;
+
+    // Collision type - editable in the Blueprint
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+    ECollisionType CollisionType;
+
+    // Reference to the collision component, can be of different types based on CollisionType
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
+    UPrimitiveComponent* CollisionComponent;
 
 protected:
     virtual void BeginPlay() override;
@@ -34,44 +63,35 @@ public:
     void SetSplineComponent(USplineComponent* Spline);
 
 protected:
-    // Update the spline position on the server
     void UpdateSplinePosition(float DeltaTime);
-
-    // Predict the character's movement on the client
     void PredictClientMovement(float DeltaTime);
-
-    // Smoothly interpolate the movement
     void InterpolateMovement(FVector TargetLocation, FRotator TargetRotation, float DeltaTime);
 
     // Called when CurrentSplinePosition is replicated
     UFUNCTION()
     void OnRep_CurrentSplinePosition();
 
-    // Setup replication properties
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Movement", meta = (AllowPrivateAccess = "true"))
-    USplineComponent* SplineComponent;
-
     UPROPERTY(ReplicatedUsing = OnRep_CurrentSplinePosition)
     float CurrentSplinePosition; // Current position on the spline
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication", meta = (AllowPrivateAccess = "true"))
-    float InterpolationSpeed = 2.0f;
-    // Tolerance value for position correction
+    float InterpolationSpeed = 50.0f;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Replication", meta = (AllowPrivateAccess = "true"))
-    float Tolerance = 0.01f; // Define your tolerance here
+    float Tolerance = 0.05f;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = "true"))
     bool bStartFollowOnBeginPlay = true;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement", meta = (AllowPrivateAccess = "true"))
     float MovementSpeed = 300.0f;
 
     UPROPERTY(Replicated)
-    bool bIsFollowing; // Flag to indicate if the character is following the spline
+    bool bIsFollowing; // Flag to indicate if the actor is following the spline
 
-    // Reference to the character's model (mesh)
     UPROPERTY(VisibleAnywhere, Category = "Appearance")
-    USkeletalMeshComponent* CharacterMesh; // Mesh component for the character model
-
+    USkeletalMeshComponent* CharacterMesh;
 };

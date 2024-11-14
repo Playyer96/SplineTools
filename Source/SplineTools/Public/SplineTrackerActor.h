@@ -6,7 +6,7 @@
 #include "Components/TextRenderComponent.h"
 #include "GameFramework/Character.h"
 #include "Engine/Texture.h"
-#include "CharacterSplineFollower.h"
+//#include "CharacterSplineFollower.h"
 #include "SplineTrackerActor.generated.h"
 
 UCLASS()
@@ -40,14 +40,14 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline Properties")
     USplineComponent* SplineComponent;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Properties|Character")
-    TSubclassOf<ACharacterSplineFollower> CharacterToSpawn; // Changed to ACharacterSplineFollower
+    //UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Properties|Character")
+    //TSubclassOf<ACharacterSplineFollower> CharacterToSpawn; // Changed to ACharacterSplineFollower
 
 protected:
     virtual void OnConstruction(const FTransform& Transform) override;
 
 private:
-    ACharacterSplineFollower* SpawnedCharacter;
+    //ACharacterSplineFollower* SpawnedCharacter;
 
     void InitializeSplineManager();
     void UpdateLabelPositions();
