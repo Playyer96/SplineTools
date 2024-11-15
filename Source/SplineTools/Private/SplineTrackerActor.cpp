@@ -13,7 +13,9 @@ ASplineTrackerActor::ASplineTrackerActor()
     PrimaryActorTick.bCanEverTick = true; // Enable tick for rotation
 
     // Create and set the root component
-    RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+    RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
+    RootComponent->bEditableWhenInherited = true;
+    SetRootComponent(RootComponent);
     RootComponent->SetMobility(EComponentMobility::Movable); // Set mobility if needed
 
     // Create the spline component and attach it to the root component

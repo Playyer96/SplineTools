@@ -9,7 +9,7 @@
 #include "Components/SphereComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "SplineTrackerActor.h"
-#include "CharacterSplineFollower.generated.h"
+#include "SplineFollowerBase.generated.h"
 
 // Enum for collision types
 UENUM(BlueprintType)
@@ -21,15 +21,17 @@ enum class ECollisionType : uint8
 };
 
 UCLASS()
-class SPLINETOOLS_API ACharacterSplineFollower : public ASplineTrackerActor
+class SPLINETOOLS_API ASplineFollowerBase : public ASplineTrackerActor
 {
     GENERATED_BODY()
 
 public:
-    ACharacterSplineFollower();
+    ASplineFollowerBase();
 
     // Collision setup function
     void SetupCollisionComponent();
+
+    void ToggleMesh(bool bUseSkeletal);
 
     void UpdateCollisionSize();
 
@@ -62,6 +64,17 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Spline Manager")
     void SetSplineComponent(USplineComponent* Spline);
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meshes", Replicated)
+    bool bUseSkeletalMesh;
+
+    //// Static Mesh asset that can be assigned in Blueprint
+    //UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meshes")
+    //UStaticMesh* StaticMeshAsset;
+
+    //// Skeletal Mesh asset that can be assigned in Blueprint
+    //UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meshes")
+    //USkeletalMesh* SkeletalMeshAsset;
+
 protected:
     void UpdateSplinePosition(float DeltaTime);
     void PredictClientMovement(float DeltaTime);
@@ -72,6 +85,8 @@ protected:
     void OnRep_CurrentSplinePosition();
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    UPROPERTY(EditAnywhere, Category = "Meshes")
+    UMeshComponent* ActiveMesh;
 
 private:
     UPROPERTY(ReplicatedUsing = OnRep_CurrentSplinePosition)
@@ -92,6 +107,11 @@ private:
     UPROPERTY(Replicated)
     bool bIsFollowing; // Flag to indicate if the actor is following the spline
 
-    UPROPERTY(VisibleAnywhere, Category = "Appearance")
-    USkeletalMeshComponent* CharacterMesh;
+    // Static Mesh Component to hold a Static Mesh
+    //UPROPERTY(VisibleAnywhere, Category = "Meshes")
+    //UStaticMeshComponent* StaticMeshComponent;
+
+    //// Skeletal Mesh Component to hold a Skeletal Mesh
+    //UPROPERTY(VisibleAnywhere, Category = "Meshes")
+    //USkeletalMeshComponent* SkeletalMeshComponent;
 };
