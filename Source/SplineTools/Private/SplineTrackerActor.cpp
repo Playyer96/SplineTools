@@ -29,12 +29,6 @@ ASplineTrackerActor::ASplineTrackerActor()
 void ASplineTrackerActor::BeginPlay()
 {
     Super::BeginPlay();
-
-    //if (!CharacterToSpawn)
-    //{
-    //    UE_LOG(LogTemp, Error, TEXT("CharacterToSpawn is not set in %s!"), *GetName());
-    //    return;
-    //}
 }
 
 void ASplineTrackerActor::OnConstruction(const FTransform& Transform)
@@ -51,7 +45,7 @@ void ASplineTrackerActor::OnConstruction(const FTransform& Transform)
         // Check if labels should be shown
         if (bShowPointLabels)
         {
-            UpdateLabelPositions(); // Update label positions if flag is enabled
+            UpdateLabelPositions();
         }
         else
         {
@@ -63,49 +57,8 @@ void ASplineTrackerActor::OnConstruction(const FTransform& Transform)
                     Label->DestroyComponent();
                 }
             }
-            PointLabels.Empty(); // Clear the array of point labels
+            PointLabels.Empty();
         }
-
-        //if (!SpawnedCharacter)
-        //{
-        //    UWorld* World = GetWorld();
-        //    if (World)
-        //    {
-        //        // Correct placement of SpawnParams
-        //        FActorSpawnParameters SpawnParams;
-        //        SpawnParams.Owner = this;
-
-        //        if (CharacterToSpawn)
-        //        {
-        //            SpawnedCharacter = World->SpawnActor<ACharacterSplineFollower>(CharacterToSpawn, GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
-
-        //            if (SpawnedCharacter)
-        //            {
-        //                // Additional safety check before initializing
-        //                if (SpawnedCharacter->IsValidLowLevel())
-        //                {
-        //                    SpawnedCharacter->SetSplineComponent(SplineComponent);
-        //                }
-        //                else
-        //                {
-        //                    UE_LOG(LogTemp, Warning, TEXT("SpawnedCharacter is invalid in %s"), *GetName());
-        //                }
-        //            }
-        //            else
-        //            {
-        //                UE_LOG(LogTemp, Warning, TEXT("Failed to spawn CharacterSplineFollower."));
-        //            }
-        //        }
-        //        else
-        //        {
-        //            UE_LOG(LogTemp, Warning, TEXT("CharacterToSpawn is not set!"));
-        //        }
-        //    }
-        //    else
-        //    {
-        //        UE_LOG(LogTemp, Warning, TEXT("World context is not valid in %s"), *GetName());
-        //    }
-        //}
     }
 }
 
@@ -160,8 +113,8 @@ void ASplineTrackerActor::UpdateLabelPositions()
 // Call this method when spline points are edited
 void ASplineTrackerActor::OnSplinePointEdited()
 {
-    if (bShowPointLabels) // Check if labels should be shown
+    if (bShowPointLabels)
     {
-        UpdateLabelPositions(); // Regenerate labels after a spline point has been edited
+        UpdateLabelPositions();
     }
 }

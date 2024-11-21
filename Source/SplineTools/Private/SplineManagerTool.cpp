@@ -68,6 +68,11 @@ void USplineManagerTool::Initialize()
         AllTrackedSplines.Add(*It);
     }
 
+    for (TActorIterator<ASplineCharacterFollower> It(World); It; ++It)
+    {
+        AllTrackedCharacters.Add(*It);
+    }
+
     World->GetTimerManager().SetTimer(UpdateTimerHandle, this, &USplineManagerTool::CheckForSplineUpdates, 0.5f, true, 1.0f);
     UE_LOG(LogTemp, Log, TEXT("Spline Manager Tool Initialized with periodic updates."));
 }
@@ -129,11 +134,23 @@ void USplineManagerTool::OnSelectionChanged(UObject* NewSelection)
             UE_LOG(LogTemp, Log, TEXT("Selected Global Spline: %s"), *SelectedSplineActor->GetName());
             CurrentGlobalSplineActor = SelectedSplineActor;
             ApplyGlobalSplineToAllSplines(CurrentGlobalSplineActor);
-            bHasModifications = true; // Mark as modified
+            bHasModifications = true;
         }
         else
         {
             UE_LOG(LogTemp, Warning, TEXT("Selected Spline is not a Global Spline: %s"), *SelectedSplineActor->GetName());
+        }
+    }
+    else if (ASplineCharacterFollower* SelectedSplineCharacter = Cast<ASplineCharacterFollower>(NewSelection)) {
+        if (SelectedSplineCharacter->bGlobalOverride) {
+            UE_LOG(LogTemp, Log, TEXT("Selected Global Spline: %s"), *SelectedSplineCharacter->GetName());
+            CurrentGlobalSplineCharacter = SelectedSplineCharacter;
+            ApplyGlobalSplineToAllSplines(CurrentGlobalSplineCharacter);
+            bHasModifications = true;
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Selected Spline is not a Global Spline: %s"), *SelectedSplineCharacter->GetName());
         }
     }
     else
@@ -166,45 +183,62 @@ void USplineManagerTool::CheckForSplineUpdates()
     {
         World->GetTimerManager().ClearTimer(UpdateTimerHandle);
     }
+
+    if (CurrentGlobalSplineCharacter && bHasModifications)
+    {
+        ApplyGlobalSplineToAllSplines(CurrentGlobalSplineCharacter);
+    }
+    else
+    {
+        World->GetTimerManager().ClearTimer(UpdateTimerHandle);
+    }
 }
 
-
-// Copy points from the global spline to all other splines
-void USplineManagerTool::ApplyGlobalSplineToAllSplines(ASplineTrackerActor* SourceSplineActor)
+template <typename T>
+void USplineManagerTool::ApplyGlobalSpline(T* SourceSpline, TArray<T*>& TrackedSplines)
 {
-    if (!SourceSplineActor || !SourceSplineActor->SplineComponent)
+    if (!SourceSpline || !SourceSpline->SplineComponent)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Source spline actor is invalid or has no spline component."));
+        UE_LOG(LogTemp, Warning, TEXT("Source spline is invalid or has no spline component."));
         return;
     }
 
-    const int32 PointCount = SourceSplineActor->SplineComponent->GetNumberOfSplinePoints();
+    const int32 PointCount = SourceSpline->SplineComponent->GetNumberOfSplinePoints();
     UE_LOG(LogTemp, Log, TEXT("Copying %d points from global spline to others."), PointCount);
 
-    for (ASplineTrackerActor* SplineActor : AllTrackedSplines)
+    for (T* Spline : TrackedSplines)
     {
-        // Check if the actor has the global override, is not the source spline, has the same class, and shares tags
-        if (SplineActor && SplineActor->bGlobalOverride && SplineActor != SourceSplineActor &&
-            SplineActor->GetClass() == SourceSplineActor->GetClass() &&
-            SplineActor->Tags == SourceSplineActor->Tags)
+        if (Spline && Spline->bGlobalOverride && Spline != SourceSpline &&
+            Spline->GetClass() == SourceSpline->GetClass() &&
+            Spline->Tags == SourceSpline->Tags)
         {
-            USplineComponent* TargetSpline = SplineActor->SplineComponent;
+            USplineComponent* TargetSpline = Spline->SplineComponent;
             if (TargetSpline)
             {
                 TargetSpline->ClearSplinePoints();
 
                 for (int32 i = 0; i < PointCount; ++i)
                 {
-                    FVector Position = SourceSplineActor->SplineComponent->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::Local);
+                    FVector Position = SourceSpline->SplineComponent->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::Local);
                     TargetSpline->AddSplinePoint(Position, ESplineCoordinateSpace::Local, true);
                 }
                 TargetSpline->UpdateSpline();
             }
             else
             {
-                UE_LOG(LogTemp, Warning, TEXT("Target Spline is null for actor: %s"), *SplineActor->GetName());
+                UE_LOG(LogTemp, Warning, TEXT("Target Spline is null for actor: %s"), *Spline->GetName());
             }
         }
     }
+}
+
+void USplineManagerTool::ApplyGlobalSplineToAllSplines(ASplineTrackerActor* SourceSplineActor)
+{
+    ApplyGlobalSpline(SourceSplineActor, AllTrackedSplines);
+}
+
+void USplineManagerTool::ApplyGlobalSplineToAllSplines(ASplineCharacterFollower* SourceSplineCharacter)
+{
+    ApplyGlobalSpline(SourceSplineCharacter, AllTrackedCharacters);
 }
 #endif

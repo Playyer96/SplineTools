@@ -1,31 +1,12 @@
 #include "SplineFollowerBase.h"
 #include "Components/SplineComponent.h"
-#include "Components/BoxComponent.h"
-#include "Components/CapsuleComponent.h"
-#include "Components/SphereComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/Actor.h"
 
 ASplineFollowerBase::ASplineFollowerBase()
 {
-    //RootComponent->RegisterComponent();
     bReplicates = true;
-    bUseSkeletalMesh = true;
     bIsFollowing = true;
-    //SkeletalMeshAsset = nullptr;
-    //StaticMeshAsset = nullptr;
-    //if (StaticMeshAsset)
-    //{
-    //    StaticMeshComponent->SetStaticMesh(StaticMeshAsset);
-    //}
-
-    //if (SkeletalMeshAsset)
-    //{
-    //    SkeletalMeshComponent->SetSkeletalMesh(SkeletalMeshAsset);
-    //}
-
-    //StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
-    //SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshComponent"));
 
     MovementSpeed = 100.0f;
 }
@@ -34,7 +15,6 @@ ASplineFollowerBase::ASplineFollowerBase()
 void ASplineFollowerBase::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
-    ToggleMesh(bUseSkeletalMesh);
 }
 
 // BeginPlay
@@ -42,11 +22,26 @@ void ASplineFollowerBase::BeginPlay()
 {
     Super::BeginPlay();
 
-    ToggleMesh(bUseSkeletalMesh);
+    if (SplineComponent)
+    {
+        // Generate a random starting position along the spline
+        const float SplineLength = SplineComponent->GetSplineLength();
 
+        if (bFollowSplineAtRandomPosition) {
+            CurrentSplinePosition = FMath::FRandRange(0.0f, SplineLength);
+        }
+        else {
+            // Clamp the StartFollowingSplineAt variable to be between 0 and 1
+            StartFollowingSplineAt = FMath::Clamp(StartFollowingSplineAt, 0.0f, 1.0f);
+
+            // Calculate the position based on the clamped StartFollowingSplineAt
+            CurrentSplinePosition = StartFollowingSplineAt * SplineLength;
+
+        }
+    }
 
     // Start following spline if enabled
-    if (bStartFollowOnBeginPlay)
+    if (HasAuthority() && bStartFollowOnBeginPlay)
     {
         StartFollowingSpline();
     }
@@ -58,114 +53,6 @@ void ASplineFollowerBase::SetSplineComponent(USplineComponent* NewSplineComponen
     {
         SplineComponent = NewSplineComponent;
     }
-}
-
-void ASplineFollowerBase::SetupCollisionComponent()
-{
-    // Ensure the RootComponent is valid
-    if (!RootComponent)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("RootComponent is not valid. Cannot initialize CollisionComponent."));
-        return;
-    }
-
-    // Check if a collision component already exists, if not, create one
-    if (!CollisionComponent)
-    {
-        // Create collision component based on the selected collision type
-        switch (CollisionType)
-        {
-        case ECollisionType::Box:
-            CollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionComponent"));
-            break;
-        case ECollisionType::Capsule:
-            CollisionComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CollisionComponent"));
-            break;
-        case ECollisionType::Sphere:
-            CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComponent"));
-            break;
-        default:
-            CollisionComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CollisionComponent"));
-            break;
-        }
-    }
-
-    // Attach the collision component to the currently active mesh
-    if (CollisionComponent)
-    {
-        //UMeshComponent* ActiveMesh = bUseSkeletalMesh ? Cast<UMeshComponent>(SkeletalMeshComponent) : Cast<UMeshComponent>(StaticMeshComponent);
-
-        if (ActiveMesh)
-        {
-            CollisionComponent->SetupAttachment(ActiveMesh); // Attach collision to the active mesh
-            CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-            CollisionComponent->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-            CollisionComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
-        }
-
-        // Update the size of the collision component based on the mesh size
-        UpdateCollisionSize();
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("CollisionComponent failed to initialize properly."));
-    }
-}
-
-// Toggle active mesh
-void ASplineFollowerBase::ToggleMesh(bool bUseSkeletal)
-{
-    //bUseSkeletalMesh = bUseSkeletal;
-
-    //if (bUseSkeletalMesh)
-    //{
-    //    if (!SkeletalMeshComponent)
-    //    {
-    //        SkeletalMeshComponent = NewObject<USkeletalMeshComponent>(this, USkeletalMeshComponent::StaticClass());
-    //        SkeletalMeshComponent->RegisterComponent();
-    //    }
-
-    //    SkeletalMeshComponent->SetSkeletalMesh(SkeletalMeshAsset);
-    //    SkeletalMeshComponent->SetVisibility(true);
-    //    SkeletalMeshComponent->SetComponentTickEnabled(true);
-    //    SkeletalMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-
-    //    // Attach to root component
-    //    SkeletalMeshComponent->SetupAttachment(RootComponent);
-
-    //    // Destroy StaticMesh if SkeletalMesh is being used
-    //    if (StaticMeshComponent)
-    //    {
-    //        StaticMeshComponent->DestroyComponent();
-    //        StaticMeshComponent = nullptr;
-    //    }
-    //}
-    //else
-    //{
-    //    if (StaticMeshAsset)
-    //    {
-    //        if (!StaticMeshComponent)
-    //        {
-    //            StaticMeshComponent = NewObject<UStaticMeshComponent>(this, UStaticMeshComponent::StaticClass());
-    //            StaticMeshComponent->RegisterComponent();
-    //        }
-
-    //        StaticMeshComponent->SetStaticMesh(StaticMeshAsset);
-    //        StaticMeshComponent->SetVisibility(true);
-    //        StaticMeshComponent->SetComponentTickEnabled(true);
-    //        StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-
-    //        // Attach to root component
-    //        StaticMeshComponent->SetupAttachment(RootComponent);
-
-    //        // Destroy SkeletalMesh if StaticMesh is being used
-    //        if (SkeletalMeshComponent)
-    //        {
-    //            SkeletalMeshComponent->DestroyComponent();
-    //            SkeletalMeshComponent = nullptr;
-    //        }
-    //    }
-    //}
 }
 
 // Tick
@@ -190,7 +77,6 @@ void ASplineFollowerBase::Tick(float DeltaTime)
 void ASplineFollowerBase::StartFollowingSpline()
 {
     bIsFollowing = true;
-    CurrentSplinePosition = 0.0f;
 }
 
 // Stop following the spline
@@ -200,37 +86,9 @@ void ASplineFollowerBase::StopFollowingSpline()
 }
 
 // Update position along the spline
-void ASplineFollowerBase::UpdateCollisionSize()
-{
-    // Get the currently active mesh
-    //UMeshComponent* ActiveMesh = bUseSkeletalMesh ? Cast<UMeshComponent>(SkeletalMeshComponent) : Cast<UMeshComponent>(StaticMeshComponent);
-
-    if (!ActiveMesh || !CollisionComponent) return;
-
-    // Get mesh bounds and adjust the collision component size accordingly
-    FVector MeshSize = ActiveMesh->Bounds.BoxExtent * 2.0f;
-
-    if (UBoxComponent* BoxComp = Cast<UBoxComponent>(CollisionComponent))
-    {
-        BoxComp->SetBoxExtent(MeshSize * 0.5f); // Half of the size for correct fitting
-    }
-    else if (UCapsuleComponent* CapsuleComp = Cast<UCapsuleComponent>(CollisionComponent))
-    {
-        CapsuleComp->SetCapsuleSize(MeshSize.X * 0.5f, MeshSize.Z * 0.5f); // Adjust for width and height
-    }
-    else if (USphereComponent* SphereComp = Cast<USphereComponent>(CollisionComponent))
-    {
-        SphereComp->SetSphereRadius(MeshSize.Size() * 0.5f); // Average size for a sphere
-    }
-}
-
-// Update position along the spline
 void ASplineFollowerBase::UpdateSplinePosition(float DeltaTime)
 {
     if (!SplineComponent) return;
-
-    // Get the active mesh
-    //UMeshComponent* ActiveMesh = bUseSkeletalMesh ? Cast<UMeshComponent>(SkeletalMeshComponent) : Cast<UMeshComponent>(StaticMeshComponent);
 
     if (!ActiveMesh) return;
 
@@ -303,7 +161,6 @@ void ASplineFollowerBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
     DOREPLIFETIME(ASplineFollowerBase, CurrentSplinePosition);
     DOREPLIFETIME(ASplineFollowerBase, bIsFollowing);
-    DOREPLIFETIME(ASplineFollowerBase, bUseSkeletalMesh);
 }
 
 void ASplineFollowerBase::OnRep_CurrentSplinePosition()
@@ -326,12 +183,4 @@ void ASplineFollowerBase::OnRep_CurrentSplinePosition()
     // Update the position and rotation of the selected mesh
     ActiveMesh->SetWorldLocation(NewLocation);
     ActiveMesh->SetWorldRotation(NewRotation);
-    //if (bUseSkeletalMesh && SkeletalMeshComponent)
-    //{
-    //}
-    //else if (StaticMeshComponent)
-    //{
-    //    StaticMeshComponent->SetWorldLocation(NewLocation);
-    //    StaticMeshComponent->SetWorldRotation(NewRotation);
-    //}
 }

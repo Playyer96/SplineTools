@@ -17,18 +17,17 @@ public:
 
     // Called when the object is created or updated
     virtual void OnConstruction(const FTransform& Transform) override;
-
-protected:
-    virtual void BeginPlay() override;
-
-public:
     virtual void Tick(float DeltaTime) override;
 
+
     // Skeletal Mesh Component to hold a Skeletal Mesh
-    UPROPERTY(VisibleAnywhere, Category = "Mesh")
+    UPROPERTY(VisibleAnywhere, Category = "Spline properties")
     USkeletalMeshComponent* SkeletalMeshComponent;
 
     // Capsule Component to act as the character's collider
-    UPROPERTY(VisibleAnywhere, Category = "Collision")
+    UPROPERTY(VisibleAnywhere, Category = "Spline properties")
     UCapsuleComponent* CapsuleComponent;
+
+protected:
+    virtual void BeginPlay() override;
 };
