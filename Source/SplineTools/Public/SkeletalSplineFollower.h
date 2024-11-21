@@ -21,11 +21,11 @@ public:
 
 
     // Skeletal Mesh Component to hold a Skeletal Mesh
-    UPROPERTY(VisibleAnywhere, Category = "Spline properties")
+    UPROPERTY(VisibleAnywhere, Category = "Spline Properties")
     USkeletalMeshComponent* SkeletalMeshComponent;
 
     // Capsule Component to act as the character's collider
-    UPROPERTY(VisibleAnywhere, Category = "Spline properties")
+    UPROPERTY(VisibleAnywhere, Category = "Spline Properties")
     UCapsuleComponent* CapsuleComponent;
 
 protected:

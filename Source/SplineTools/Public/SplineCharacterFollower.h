@@ -22,18 +22,18 @@ public:
     void InitializeSplineManager();
 
     // Start following the spline
-    UFUNCTION(BlueprintCallable, Category = "Spline Movement")
+    UFUNCTION(BlueprintCallable, Category = "Spline Properties")
     void StartFollowingSpline();
 
     // Stop following the spline
-    UFUNCTION(BlueprintCallable, Category = "Spline Movement")
+    UFUNCTION(BlueprintCallable, Category = "Spline Properties")
     void StopFollowingSpline();
 
     // Set the spline component to follow
-    UFUNCTION(BlueprintCallable, Category = "Spline Movement")
+    UFUNCTION(BlueprintCallable, Category = "Spline Properties")
     void SetSplineComponent(USplineComponent* Spline);
 
-    UFUNCTION(BlueprintCallable, Category = "Spline Movement")
+    UFUNCTION(BlueprintCallable, Category = "Spline Properties")
     void CreateAndFollowNewSpline();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Properties")
@@ -42,28 +42,28 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Properties")
     bool bCloseLoopOverride;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline properties", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline properties")
     bool bStartFollowOnBeginPlay = true;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spline Properties")
     USplineComponent* SplineComponent;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spline Properties", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spline Properties")
     TSubclassOf<ASplineTrackerActor> SplineActorClass;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spline Properties", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spline Properties")
     bool bFollowSplineAtRandomPosition = false;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Properties", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", ClampMax = "1.0"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Properties", meta = (ClampMin = "0.0", ClampMax = "1.0"))
     float StartFollowingSplineAt = 0.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spline Properties", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spline Properties")
     float MovementSpeed = 300.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spline Properties", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spline Properties")
     float InterpolationSpeed = 50.0f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spline Properties", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spline Properties")
     float Tolerance = 0.05f;
 
 protected:
